@@ -6,7 +6,7 @@ require 'fileutils'
 require 'securerandom'
 
 # need install dm-sqlite-adapter
-DataMapper::setup(:default, "sqlite3://#{Dir.pwd}/blog.db")
+DataMapper::setup(:default, "sqlite3://#{Dir.pwd}/yt.db")
 
 class Post
     include DataMapper::Resource
