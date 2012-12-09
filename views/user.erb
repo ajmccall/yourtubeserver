@@ -1,10 +1,25 @@
 <html>
 <head></head>
 <body>
-	<h3>Details for user[<%= user.id %>]</h3>
-	<p>   appId:<%= user.appId %></p>
-	<p>devToken:<%= user.deviceToken %></p>
-	<p>userToke:<%= user.userToken %></p>
-	<p>emailAdd:<%= user.email %></p>
+	  <div>
+	<h3>Details for user[<%= @user.id %>]</h3>
+	<table>
+	    <tr>
+	      <th>Property</th>
+	      <th>Value</th>
+	    </tr>
+	    <tr>
+	    	<td>DeviceToken</td>
+	    	<td><%= @user.deviceToken %></td>
+	    </tr>
+	    <tr>
+	    	<td>UserToken</td>
+	    	<td><%= @user.userToken %></td>
+	    </tr>
+	    <tr>
+	    	<td>Email</td>
+	    	<td><%= @user.email %></td>
+	    </tr>
+    </table>
 </body>
 </html>

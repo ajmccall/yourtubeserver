@@ -8,14 +8,6 @@ require 'securerandom'
 # need install dm-sqlite-adapter
 DataMapper::setup(:default, "sqlite3://#{Dir.pwd}/yt.db")
 
-class Post
-    include DataMapper::Resource
-    property :id, Serial
-    property :title, String
-    property :body, Text
-    property :created_at, DateTime
-end
-
 class User
 	include DataMapper::Resource
 	property :id, Serial
@@ -31,12 +23,11 @@ end
 DataMapper.finalize
 
 # automatically create the post table
-Post.auto_upgrade!
 User.auto_upgrade!
 
 get '/user/:userId' do
 
-	@user = User.get([:userId])
+	@user = User.get(params[:userId])
 
 	erb :user
 end
@@ -86,11 +77,4 @@ put '/upload/:id' do
   File.open(params[:id], 'w+') do |file|
     file.write(request.body.read)
   end
-end
-
-
-get '/' do
-    # get the latest 20 posts
-    @posts = Post.all(:order => [ :id.desc ], :limit => 20)
-    erb :index
 end
