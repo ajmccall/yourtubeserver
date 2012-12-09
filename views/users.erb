@@ -1,0 +1,30 @@
+<html>
+<head></head>
+<body>
+	  <div>
+	<h3>All Users' Details</h3>
+	<table>
+	    <tr>
+	      <th>Id</th>
+	      <th>AppId</th>
+	      <th>DeviceToken</th>
+	      <th>UserToken</th>
+	      <th>Email</th>
+	      <th>Create</th>
+	      <th>LastModified</th>
+	    </tr>
+
+	  	<% @users.each do |user| %>
+  			<tr>
+			    <td><%= user.id %></td>
+			    <td><%= user.appId %></td>
+			    <td><%= user.deviceToken %></td>
+			    <td><%= user.userToken %></td>
+			    <td><%= user.email %></td>
+			    <td><%= user.created %></td>
+			    <td><%= user.lastModified %></td>
+			</tr>
+		<% end %>
+    </table>
+</body>
+</html>
