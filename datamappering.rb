@@ -8,15 +8,41 @@ require 'securerandom'
 # need install dm-sqlite-adapter
 DataMapper::setup(:default, "sqlite3://#{Dir.pwd}/yt.db")
 
-class User
+
+class Account
+	include DataMapper::Resource
+	property :accountNumber, Serial
+	property :userToken, String
+	property :email, String
+	property :facebook, String
+	property :created, DateTime
+	property :lastModified, DateTime
+
+	has n, :devices
+	has n, :personalMessage
+end
+
+class Device
 	include DataMapper::Resource
 	property :id, Serial
 	property :appId, String
 	property :deviceToken, String
-	property :userToken, String
-	property :email, String
+	property :userAgent, Text
+	property :lastSeen, DateTime
+	property :lastSeenIP, String
 	property :created, DateTime
 	property :lastModified, DateTime
+
+	belongs_to :account, :required => false
+end
+
+class PersonalMessage
+	include DataMapper::Resource
+	property :id, Serial
+	property :filePath, String
+	property :fileName, String
+
+	belongs_to :account
 end
 
 # Perform basic sanity checks and initialize all relationships
@@ -24,29 +50,33 @@ end
 DataMapper.finalize
 
 # automatically create the post table
-User.auto_upgrade!
+Device.auto_upgrade!
+Account.auto_upgrade!
+PersonalMessage.auto_upgrade!
 
-#APPLICATION
+# ======================
+# APPLICATION
+#
 
-#-------------------
-# Device
+# ======================
+# Device CRUD
 
-get '/device/:deviceToken' do
+get '/device/:appId' do
 
-	user = User.first(:deviceToken => params[:deviceToken])
+	device = Device.first(:appId => params[:appId])
 
-	if user == nil
+	if device == nil
 		status 404
-		body "User record with deviceToken[#{params[:deviceToken]}] not found. Try registering a device first."
+		body "Device with appId[#{params[:appId]}] not found. Try registering a device first."
 	else 
 		status 200
 		content_type :json
-		{:lastModified => "#{user.lastModified}"}.to_json
+		{:deviceToken => '#{device.deviceToken}', :lastModified => "#{device.lastModified}"}.to_json
 	end
 
 end
 
-put '/device', :provides => :json do
+post '/device', :provides => :json do
 
 	request.body.rewind
 	data = JSON.parse request.body.read
@@ -54,83 +84,97 @@ put '/device', :provides => :json do
 	#would be nice to do some validatio here
 	newToken = SecureRandom.hex(16)
 
-	user = User.create(
-		:deviceToken => "#{newToken}",
+		device = Device.create(
 		:appId => "#{data['appId']}",
+		:deviceToken => "#{newToken}",
+		:userAgent => "#{request.user_agent}",
+		:lastSeen => Time.now,
+		:lastSeenIP => "#{request.ip}",
 		:created => Time.now,
 		:lastModified => Time.now
 	)
 
-	user.save
+	device.save
 
 	status 201
 	content_type :json
-	{:deviceToken => "#{newToken}", :lastModified => "#{user.lastModified}"}.to_json
+	{:deviceToken => "#{newToken}", :lastModified => "#{device.lastModified}"}.to_json
 end
 
-#-------------------
-# User
+# ======================
+# Account CRUD
 
-get '/user/:userId' do
+get '/account/:accountNumber' do
 
-	@user = User.get(params[:userId])
+	account = Account.get(params[:accountNumber])
 
-	if @user == nil
+	if account == nil
 		status 404
-		body "User with id[#{params[:userId]}] not found. Try registering a user first."
+		body "Account with accountNumber[#{params[:accountNumber]}] not found. Try creating an account first."
 	else 
 		status 200
 		content_type :json
-		{:userToken => "#{@user.userToken}", :email => "#{@user.email}", :lastModified => "#{@user.lastModified}"}.to_json
+		{:userToken => "#{@account.userToken}", :email => "#{@account.email}", :lastModified => "#{@account.lastModified}"}.to_json
 	end
 
 end
 
-get '/admin/user/:userId' do
+get '/admin/account/:accountNumber' do
 
-	@user = User.get(params[:userId])
+	@account = Account.get(params[:accountNumber])
 
-	erb :user
+	erb :account
 end
 
-get '/admin/users' do
-	@users = User.all
+get '/admin/accounts' do
+	@accounts = Account.all
 
-	erb :users
+	erb :accounts
 end
 	
 
-put '/user', :provides => :json do
+post '/account', :provides => :json do
 
 	request.body.rewind
 	data = JSON.parse request.body.read
 
 	#would be nice to do some validation here
 
-	user = User.first(:deviceToken => "#{data['deviceToken']}")
+	device = Device.first(:deviceToken => "#{data['deviceToken']}")
 
-	if user == nil
+	if device == nil
 		status 400
-		body "Attempting to register a user without first registering a device for deviceToken[#{data['deviceToken']}]. Try registering a device first."
+		body "Attempting to create a user without first registering a device with a valid deviceToken. Try getting a device token first."
 
 	else
-		newToken = SecureRandom.hex(16)
+		newToken = SecureRandom.hex(8)
 
-		user.update(:userToken => "#{newToken}", :email => "#{data['email']}" , :lastModified => Time.now)	
+		account = Account.create(
+			:userToken => "#{newToken}", 
+			:email => "#{data['email']}" , 
+			:facebook => "#{data['facebook']}",
+			:created => Time.now,
+			:lastModified => Time.now
+			)
 
-		user.save
+		account.save
+
+		#link account to this device
+		device.update(:account => account, :lastSeen => Time.now, :lastSeenIP => "#{request.ip}", :lastModified => Time.now)
+		device.save
 
 		#return the JSON response
 		status 201
 		content_type :json
-		{:userToken => "#{newToken}", :lastModified => "#{user.lastModified}"}.to_json
+		{:userToken => "#{newToken}", :lastModified => "#{account.lastModified}"}.to_json
 	end
 end
 
 #upload PMS
 
-put '/upload/:id' do
+post '/account/:accountNumber/images/:id' do
   File.open(params[:id], 'w+') do |file|
     file.write(request.body.read)
   end
 end
+
