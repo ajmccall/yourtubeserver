@@ -106,7 +106,7 @@ end
 
 get '/account/:accountNumber' do
 
-	account = Account.get(params[:accountNumber])
+	@account = Account.get(params[:accountNumber])
 
 	if account == nil
 		status 404
@@ -116,6 +116,8 @@ get '/account/:accountNumber' do
 		content_type :json
 		{:userToken => "#{@account.userToken}", :email => "#{@account.email}", :lastModified => "#{@account.lastModified}"}.to_json
 	end
+
+	erb :account
 
 end
 

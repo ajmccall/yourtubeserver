@@ -2,24 +2,30 @@
 <head></head>
 <body>
 	  <div>
-	<h3>Details for user[<%= @user.id %>]</h3>
+	<h2>Details for user[<%= @account.accountNumber %>]</h2>
+
+	<b>UserToken</b><br/><%= @account.userToken %><br/>
+	<b>Email Login</b><br/><%= @account.facebook %><br/>
+	<b>Facebook Login</b><br/><%= @account.email %><br/><br/>
+	<b>Linked Devices</b>
+
 	<table>
 	    <tr>
-	      <th>Property</th>
-	      <th>Value</th>
+	      <th>AppID</th>
+	      <th>DeviceToken</th>
+	      <th>LastSeen</th>
+	      <th>LastSeenIP</th>
+	      <th>UserAgent</th>
 	    </tr>
-	    <tr>
-	    	<td>DeviceToken</td>
-	    	<td><%= @user.deviceToken %></td>
-	    </tr>
-	    <tr>
-	    	<td>UserToken</td>
-	    	<td><%= @user.userToken %></td>
-	    </tr>
-	    <tr>
-	    	<td>Email</td>
-	    	<td><%= @user.email %></td>
-	    </tr>
+	  	<% @account.devices.each do |device| %>
+  			<tr>
+			    <td><%= device.appId %></td>
+			    <td><%= device.deviceToken %></td>
+			    <td><%= device.lastSeen %></td>
+			    <td><%= device.lastSeenIP %></td>
+			    <td><%= device.userAgent %></td>
+			</tr>
+		<% end %>
     </table>
 </body>
 </html>
